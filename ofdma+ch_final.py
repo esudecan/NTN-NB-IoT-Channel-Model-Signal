@@ -527,8 +527,8 @@ nb_iot_subcarriers     = 12
 num_ofdm_symbols       = 1000
 snr_bin_count          = 15
 
-E_bit      = 0.5
-A          = np.sqrt(2 * E_bit) / np.sqrt(2)
+E_bit      = 1
+A          = np.sqrt(E_bit) / np.sqrt(2)
 pilot_value = A + 1j * A
 
 center     = sub // 2
@@ -678,11 +678,13 @@ for s in range(num_ofdm_symbols):
     los   = np.sqrt(k_lin / (k_lin + 1))
     nlos  = (np.random.normal(0, 1) + 1j * np.random.normal(0, 1)) / np.sqrt(2 * (k_lin + 1))
     h_channel = los + nlos
-    power_norm = np.sqrt(np.abs(h_channel)**2 + 1e-12)
-    h_channel = h_channel / power_norm
+    h_channel = h_channel / np.abs(h_channel)
+    #power_norm = np.sqrt(np.abs(h_channel)**2 + 1e-12)
+    #h_channel = h_channel / power_norm
 
-    path_loss_amp = 10 ** (-channel_symbol['loss_arr'][s] / 20)
-    ch_block = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel * path_loss_amp
+    #path_loss_amp = 10 ** (-channel_symbol['loss_arr'][s] / 20)
+    #ch_block = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel * path_loss_amp
+    ch_block = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel
     rx_block_channel = awgn(ch_block, snr_db, cp_length, sub, nb_iot_subcarriers)
 
     rx_blocks_after_channel.append(rx_block_channel)
