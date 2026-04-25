@@ -15,6 +15,8 @@ from matplotlib.gridspec import GridSpec
 np.random.seed(42)
 
 ITUR_AVAILABLE = True
+CHANNEL_GRAPHICS_AVAILABLE = False
+OFDMA_GRAPHICS_AVAILABLE = True
 
 def q_function(x):
     return 0.5 * erfc(x / np.sqrt(2))
@@ -312,203 +314,204 @@ def fmt(ax, title, xlabel='Time (Minutes)', ylabel=''):
 # SECTION 2 – CHANNEL FIGURES 
 # ===========================================================================
 
+if CHANNEL_GRAPHICS_AVAILABLE:
 # --- Figure 1: Path Loss ---
 
-fig1, ax = plt.subplots(figsize=(10, 5))
-fig1.canvas.manager.set_window_title('Fig 1 – Total Path Loss')
-add_markov_bands(ax)
-ax.plot(time_arr, loss_arr, color='crimson', linewidth=2,
-        label='Total Path Loss (FSPL + ITU-R Atmospheric)', zorder=3)
-add_culm(ax)
-fmt(ax, '1. Total Path Loss Over Time', ylabel='Loss (dB)')
-fig1.tight_layout()
+    fig1, ax = plt.subplots(figsize=(10, 5))
+    fig1.canvas.manager.set_window_title('Fig 1 – Total Path Loss')
+    add_markov_bands(ax)
+    ax.plot(time_arr, loss_arr, color='crimson', linewidth=2,
+            label='Total Path Loss (FSPL + ITU-R Atmospheric)', zorder=3)
+    add_culm(ax)
+    fmt(ax, '1. Total Path Loss Over Time', ylabel='Loss (dB)')
+    fig1.tight_layout()
 
-ax.grid(True, linestyle='--', alpha=0.7)
-ax.legend()
-plt.tight_layout()
-plt.show()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
 
-# Figure: ITU-R atmospheric contributions
-fig_atm, ax_atm = plt.subplots(figsize=(10, 5))
-fig_atm.canvas.manager.set_window_title('Fig – ITU-R Atmospheric Loss')
-add_markov_bands(ax_atm)
-ax_atm.plot(time_arr, atm_gas_arr, linewidth=1.5, label='Gas')
-ax_atm.plot(time_arr, atm_cloud_arr, linewidth=1.5, label='Cloud')
-ax_atm.plot(time_arr, atm_rain_arr, linewidth=1.5, label='Rain')
-ax_atm.plot(time_arr, atm_scint_arr, linewidth=1.5, label='Scintillation')
-ax_atm.plot(time_arr, atm_total_arr, linewidth=2.2, label='Total ITU-R Atmospheric')
-add_culm(ax_atm)
-fmt(ax_atm, 'ITU-R Atmospheric Attenuation Contributions', ylabel='Loss (dB)')
-ax_atm.legend(fontsize=9)
-fig_atm.tight_layout()
-plt.show()
+    # Figure: ITU-R atmospheric contributions
+    fig_atm, ax_atm = plt.subplots(figsize=(10, 5))
+    fig_atm.canvas.manager.set_window_title('Fig – ITU-R Atmospheric Loss')
+    add_markov_bands(ax_atm)
+    ax_atm.plot(time_arr, atm_gas_arr, linewidth=1.5, label='Gas')
+    ax_atm.plot(time_arr, atm_cloud_arr, linewidth=1.5, label='Cloud')
+    ax_atm.plot(time_arr, atm_rain_arr, linewidth=1.5, label='Rain')
+    ax_atm.plot(time_arr, atm_scint_arr, linewidth=1.5, label='Scintillation')
+    ax_atm.plot(time_arr, atm_total_arr, linewidth=2.2, label='Total ITU-R Atmospheric')
+    add_culm(ax_atm)
+    fmt(ax_atm, 'ITU-R Atmospheric Attenuation Contributions', ylabel='Loss (dB)')
+    ax_atm.legend(fontsize=9)
+    fig_atm.tight_layout()
+    plt.show()
 
-#FSPL vs Slant Range
-fig2, ax = plt.subplots(figsize=(10, 5))
-fig2.canvas.manager.set_window_title('Fig 2 – FSPL & Slant Range')
-add_markov_bands(ax)
-c1, c2 = 'darkorange', 'steelblue'
-ln1, = ax.plot(time_arr, fspl_arr, color=c1, linewidth=2, label='FSPL (dB)', zorder=3)
-ax.set_ylabel('FSPL (dB)', color=c1, fontsize=10); ax.tick_params(axis='y', labelcolor=c1)
-ax.grid(True, linestyle='--', alpha=0.5)
-axt = ax.twinx()
-ln2, = axt.plot(time_arr, dist_arr, color=c2, linewidth=2, linestyle='-.', label='Slant Range (km)', zorder=3)
-axt.set_ylabel('Slant Range (km)', color=c2, fontsize=10); axt.tick_params(axis='y', labelcolor=c2)
-add_culm(ax)
-fmt(ax, '2. FSPL and Slant Range Over Time')
-ax.legend([ln1, ln2], [ln1.get_label(), ln2.get_label()], fontsize=9, loc='upper right')
-fig2.tight_layout()
-plt.show()
+    #FSPL vs Slant Range
+    fig2, ax = plt.subplots(figsize=(10, 5))
+    fig2.canvas.manager.set_window_title('Fig 2 – FSPL & Slant Range')
+    add_markov_bands(ax)
+    c1, c2 = 'darkorange', 'steelblue'
+    ln1, = ax.plot(time_arr, fspl_arr, color=c1, linewidth=2, label='FSPL (dB)', zorder=3)
+    ax.set_ylabel('FSPL (dB)', color=c1, fontsize=10); ax.tick_params(axis='y', labelcolor=c1)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    axt = ax.twinx()
+    ln2, = axt.plot(time_arr, dist_arr, color=c2, linewidth=2, linestyle='-.', label='Slant Range (km)', zorder=3)
+    axt.set_ylabel('Slant Range (km)', color=c2, fontsize=10); axt.tick_params(axis='y', labelcolor=c2)
+    add_culm(ax)
+    fmt(ax, '2. FSPL and Slant Range Over Time')
+    ax.legend([ln1, ln2], [ln1.get_label(), ln2.get_label()], fontsize=9, loc='upper right')
+    fig2.tight_layout()
+    plt.show()
 
-# --- Figure 2: Elevation & Markov States---
+    # --- Figure 2: Elevation & Markov States---
 
-fig3, ax = plt.subplots(figsize=(10, 5))
-fig3.canvas.manager.set_window_title('Fig 3 – Elevation & Markov States')
-add_markov_bands(ax)
-ax.plot(time_arr, el_arr, color='royalblue', linewidth=2, label='Elevation (°)', zorder=3)
-ax.axhline(50.0, color='green',  linestyle='--', linewidth=1.3, alpha=0.85, label='50° A/B')
-ax.axhline(25.0, color='orange', linestyle='--', linewidth=1.3, alpha=0.85, label='25° B/C')
-add_culm(ax)
-fmt(ax, '3. Elevation Angle and Markov State Boundaries', ylabel='Elevation (°)')
-ax.legend(fontsize=9)
-fig3.tight_layout()
-plt.show()
+    fig3, ax = plt.subplots(figsize=(10, 5))
+    fig3.canvas.manager.set_window_title('Fig 3 – Elevation & Markov States')
+    add_markov_bands(ax)
+    ax.plot(time_arr, el_arr, color='royalblue', linewidth=2, label='Elevation (°)', zorder=3)
+    ax.axhline(50.0, color='green',  linestyle='--', linewidth=1.3, alpha=0.85, label='50° A/B')
+    ax.axhline(25.0, color='orange', linestyle='--', linewidth=1.3, alpha=0.85, label='25° B/C')
+    add_culm(ax)
+    fmt(ax, '3. Elevation Angle and Markov State Boundaries', ylabel='Elevation (°)')
+    ax.legend(fontsize=9)
+    fig3.tight_layout()
+    plt.show()
 
-# --- Figure 3: Doppler ---
+    # --- Figure 3: Doppler ---
 
-fig4, ax = plt.subplots(figsize=(10, 5))
-fig4.canvas.manager.set_window_title('Fig 4 – Doppler Shift (S-Curve)')
-add_markov_bands(ax)
-ax.plot(time_arr, dop_arr/1e3, color='darkorchid', linewidth=2.5, label='Doppler Shift', zorder=3)
-ax.axhline(0, color='black', linestyle='--', linewidth=1.5, label='Zero Doppler')
-ax.fill_between(time_arr, 0, dop_arr/1e3, where=(dop_arr>0),
-                color='royalblue', alpha=0.10, label='Approaching (+f)')
-ax.fill_between(time_arr, 0, dop_arr/1e3, where=(dop_arr<0),
-                color='tomato',    alpha=0.10, label='Receding (−f)')
-zi = np.argmin(np.abs(dop_arr))
-ax.annotate(f'≈0 Hz @ {time_arr[zi]:.2f} min',
-            xy=(time_arr[zi], dop_arr[zi]/1e3),
-            xytext=(time_arr[zi]+0.5, dop_arr.max()/1e3*0.35),
-            arrowprops=dict(arrowstyle='->', color='darkorchid', lw=1.6),
-            fontsize=9, color='darkorchid', fontweight='bold')
-add_culm(ax)
-fmt(ax, '4. Doppler Shift (S-Curve)', ylabel='Doppler Frequency (kHz)')
-ax.legend(fontsize=9)
-fig4.tight_layout()
-plt.show()
+    fig4, ax = plt.subplots(figsize=(10, 5))
+    fig4.canvas.manager.set_window_title('Fig 4 – Doppler Shift (S-Curve)')
+    add_markov_bands(ax)
+    ax.plot(time_arr, dop_arr/1e3, color='darkorchid', linewidth=2.5, label='Doppler Shift', zorder=3)
+    ax.axhline(0, color='black', linestyle='--', linewidth=1.5, label='Zero Doppler')
+    ax.fill_between(time_arr, 0, dop_arr/1e3, where=(dop_arr>0),
+                    color='royalblue', alpha=0.10, label='Approaching (+f)')
+    ax.fill_between(time_arr, 0, dop_arr/1e3, where=(dop_arr<0),
+                    color='tomato',    alpha=0.10, label='Receding (−f)')
+    zi = np.argmin(np.abs(dop_arr))
+    ax.annotate(f'≈0 Hz @ {time_arr[zi]:.2f} min',
+                xy=(time_arr[zi], dop_arr[zi]/1e3),
+                xytext=(time_arr[zi]+0.5, dop_arr.max()/1e3*0.35),
+                arrowprops=dict(arrowstyle='->', color='darkorchid', lw=1.6),
+                fontsize=9, color='darkorchid', fontweight='bold')
+    add_culm(ax)
+    fmt(ax, '4. Doppler Shift (S-Curve)', ylabel='Doppler Frequency (kHz)')
+    ax.legend(fontsize=9)
+    fig4.tight_layout()
+    plt.show()
 
-# --- Figure 4: Rician K ---
+    # --- Figure 4: Rician K ---
 
-fig5, ax = plt.subplots(figsize=(10, 5))
-fig5.canvas.manager.set_window_title('Fig 5 – Rician K-Factor')
-add_markov_bands(ax)
-ax.plot(time_arr, k_arr, color='saddlebrown', linewidth=2, label='Rician K-Factor (dB)', zorder=3)
-add_culm(ax)
-fmt(ax, '5. Rician K-Factor Over Time', ylabel='K (dB)')
-ax.legend(fontsize=9)
-fig5.tight_layout()
-plt.show()
+    fig5, ax = plt.subplots(figsize=(10, 5))
+    fig5.canvas.manager.set_window_title('Fig 5 – Rician K-Factor')
+    add_markov_bands(ax)
+    ax.plot(time_arr, k_arr, color='saddlebrown', linewidth=2, label='Rician K-Factor (dB)', zorder=3)
+    add_culm(ax)
+    fmt(ax, '5. Rician K-Factor Over Time', ylabel='K (dB)')
+    ax.legend(fontsize=9)
+    fig5.tight_layout()
+    plt.show()
 
-# --- Figure 5: Link Budget ---
+    # --- Figure 5: Link Budget ---
 
-rx_sens = channel_results['rx_sensitivity_dbm']
-fig6, ax = plt.subplots(figsize=(10, 5))
-fig6.canvas.manager.set_window_title('Fig 6 – Link Budget & SNR')
-add_markov_bands(ax)
-ax.plot(time_arr, lb_arr,  color='teal',  linewidth=2,   label='Rx Power (dBm)', zorder=3)
-ax.plot(time_arr, snr_arr, color='navy',  linewidth=1.5, linestyle='--', label='SNR (dB)', zorder=3)
-ax.axhline(rx_sens, color='red', linestyle='--', linewidth=2,
-           label=f'Rx Sensitivity ({rx_sens} dBm)')
-ax.fill_between(time_arr, lb_arr.min()-5, rx_sens,
-                color='red',   alpha=0.08, label='Outage Zone',    zorder=1)
-ax.fill_between(time_arr, rx_sens, snr_arr.max()+5,
-                color='green', alpha=0.08, label='Link Available', zorder=1)
-add_culm(ax)
-fmt(ax, '6. Link Budget and SNR', ylabel='Power / SNR  (dBm / dB)')
-ax.set_ylim(lb_arr.min()-5, snr_arr.max()+5)
-ax.legend(fontsize=9, loc='lower right')
-fig6.tight_layout()
-plt.show()
+    rx_sens = channel_results['rx_sensitivity_dbm']
+    fig6, ax = plt.subplots(figsize=(10, 5))
+    fig6.canvas.manager.set_window_title('Fig 6 – Link Budget & SNR')
+    add_markov_bands(ax)
+    ax.plot(time_arr, lb_arr,  color='teal',  linewidth=2,   label='Rx Power (dBm)', zorder=3)
+    ax.plot(time_arr, snr_arr, color='navy',  linewidth=1.5, linestyle='--', label='SNR (dB)', zorder=3)
+    ax.axhline(rx_sens, color='red', linestyle='--', linewidth=2,
+            label=f'Rx Sensitivity ({rx_sens} dBm)')
+    ax.fill_between(time_arr, lb_arr.min()-5, rx_sens,
+                    color='red',   alpha=0.08, label='Outage Zone',    zorder=1)
+    ax.fill_between(time_arr, rx_sens, snr_arr.max()+5,
+                    color='green', alpha=0.08, label='Link Available', zorder=1)
+    add_culm(ax)
+    fmt(ax, '6. Link Budget and SNR', ylabel='Power / SNR  (dBm / dB)')
+    ax.set_ylim(lb_arr.min()-5, snr_arr.max()+5)
+    ax.legend(fontsize=9, loc='lower right')
+    fig6.tight_layout()
+    plt.show()
 
-# --- Figure 6: Markov state bar ---
+    # --- Figure 6: Markov state bar ---
 
-fig7, ax = plt.subplots(figsize=(9, 6))
-fig7.canvas.manager.set_window_title('Fig 7 – Markov State Parameters')
+    fig7, ax = plt.subplots(figsize=(9, 6))
+    fig7.canvas.manager.set_window_title('Fig 7 – Markov State Parameters')
 
-states_lbl = ['A  (LOS)', 'B  (Moderate)', 'C  (Shadow)']
-el_bounds  = ['el ≥ 50°', '25°≤el<50°', 'el < 25°']
-durations  = [state_counts.get(k, 0) for k in ['A','B','C']]
-pct_       = [100*d/600 for d in durations]
+    states_lbl = ['A  (LOS)', 'B  (Moderate)', 'C  (Shadow)']
+    el_bounds  = ['el ≥ 50°', '25°≤el<50°', 'el < 25°']
+    durations  = [state_counts.get(k, 0) for k in ['A','B','C']]
+    pct_       = [100*d/600 for d in durations]
 
-def state_mean_(arr, sk):
-    idx_ = np.where(state_arr == sk)[0]
-    return np.mean(arr[idx_]) if len(idx_) else float('nan')
+    def state_mean_(arr, sk):
+        idx_ = np.where(state_arr == sk)[0]
+        return np.mean(arr[idx_]) if len(idx_) else float('nan')
 
-ml_ = [state_mean_(loss_arr, k) for k in ['A','B','C']]
-ms_ = [state_mean_(snr_arr,  k) for k in ['A','B','C']]
-mk_ = [state_mean_(k_arr,    k) for k in ['A','B','C']]
+    ml_ = [state_mean_(loss_arr, k) for k in ['A','B','C']]
+    ms_ = [state_mean_(snr_arr,  k) for k in ['A','B','C']]
+    mk_ = [state_mean_(k_arr,    k) for k in ['A','B','C']]
 
-bc_ = ['#2e7d32','#f9a825','#c62828']
-bars = ax.bar(states_lbl, durations, color=bc_, alpha=0.88, edgecolor='black', linewidth=0.9)
-for i,(bar,d,p,ml,ms,mk,bnd) in enumerate(zip(bars,durations,pct_,ml_,ms_,mk_,el_bounds)):
-    if d>0:
-        ax.text(bar.get_x()+bar.get_width()/2, max(d*0.06,4),
-                bnd, ha='center', va='bottom', fontsize=9, color='white', fontweight='bold')
-    ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+5,
-            f'{d}s ({p:.0f}%)\nAvg Loss:{ml:.1f}dB\nAvg SNR:{ms:.1f}dB\nAvg K:{mk:.1f}dB',
-            ha='center', va='bottom', fontsize=8.5)
-ax.set_ylim(0, max(durations)*1.60 if max(durations)>0 else 60)
-ax.set_ylabel('Duration (seconds)', fontsize=10)
-ax.set_xlabel('Channel State  (ITU-R / Lutz)', fontsize=10)
-ax.set_title('7. Markov State Parameters  —  10-min Window',
-             fontsize=12, fontweight='bold', pad=8)
-ax.grid(True, axis='y', linestyle='--', alpha=0.5)
-fig7.tight_layout()
-plt.show()
+    bc_ = ['#2e7d32','#f9a825','#c62828']
+    bars = ax.bar(states_lbl, durations, color=bc_, alpha=0.88, edgecolor='black', linewidth=0.9)
+    for i,(bar,d,p,ml,ms,mk,bnd) in enumerate(zip(bars,durations,pct_,ml_,ms_,mk_,el_bounds)):
+        if d>0:
+            ax.text(bar.get_x()+bar.get_width()/2, max(d*0.06,4),
+                    bnd, ha='center', va='bottom', fontsize=9, color='white', fontweight='bold')
+        ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+5,
+                f'{d}s ({p:.0f}%)\nAvg Loss:{ml:.1f}dB\nAvg SNR:{ms:.1f}dB\nAvg K:{mk:.1f}dB',
+                ha='center', va='bottom', fontsize=8.5)
+    ax.set_ylim(0, max(durations)*1.60 if max(durations)>0 else 60)
+    ax.set_ylabel('Duration (seconds)', fontsize=10)
+    ax.set_xlabel('Channel State  (ITU-R / Lutz)', fontsize=10)
+    ax.set_title('7. Markov State Parameters  —  10-min Window',
+                fontsize=12, fontweight='bold', pad=8)
+    ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+    fig7.tight_layout()
+    plt.show()
 
-# --- Figure 7: Ground track ---
+    # --- Figure 7: Ground track ---
 
-fig8 = plt.figure(figsize=(16, 7))
-fig8.canvas.manager.set_window_title('Fig 8 – Ground Track (Global)')
-ax8  = fig8.add_subplot(1,1,1, projection=ccrs.PlateCarree())
-ax8.set_global()
-ax8.add_feature(cfeature.OCEAN,     facecolor='#d6eaf8', zorder=0)
-ax8.add_feature(cfeature.LAND,      facecolor='#eaecee', zorder=0)
-ax8.add_feature(cfeature.COASTLINE, linewidth=0.8,        zorder=1)
-ax8.add_feature(cfeature.BORDERS,   linewidth=0.5, alpha=0.6, zorder=1)
-gl8 = ax8.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-gl8.top_labels=False; gl8.right_labels=False
+    fig8 = plt.figure(figsize=(16, 7))
+    fig8.canvas.manager.set_window_title('Fig 8 – Ground Track (Global)')
+    ax8  = fig8.add_subplot(1,1,1, projection=ccrs.PlateCarree())
+    ax8.set_global()
+    ax8.add_feature(cfeature.OCEAN,     facecolor='#d6eaf8', zorder=0)
+    ax8.add_feature(cfeature.LAND,      facecolor='#eaecee', zorder=0)
+    ax8.add_feature(cfeature.COASTLINE, linewidth=0.8,        zorder=1)
+    ax8.add_feature(cfeature.BORDERS,   linewidth=0.5, alpha=0.6, zorder=1)
+    gl8 = ax8.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
+    gl8.top_labels=False; gl8.right_labels=False
 
-SC = {'A':'limegreen','B':'gold','C':'tomato'}
-for i in range(len(sat_lat_arr)-1):
-    ax8.plot(sat_lon_arr[i:i+2], sat_lat_arr[i:i+2],
-             color=SC[state_arr[i]], linewidth=2.8,
-             transform=ccrs.PlateCarree(), zorder=3)
+    SC = {'A':'limegreen','B':'gold','C':'tomato'}
+    for i in range(len(sat_lat_arr)-1):
+        ax8.plot(sat_lon_arr[i:i+2], sat_lat_arr[i:i+2],
+                color=SC[state_arr[i]], linewidth=2.8,
+                transform=ccrs.PlateCarree(), zorder=3)
 
-if len(sat_lat_arr)>2:
-    for ai in np.linspace(0, len(sat_lat_arr)-2, 6, dtype=int):
-        ax8.annotate('', xy=(sat_lon_arr[ai+1],sat_lat_arr[ai+1]),
-                     xytext=(sat_lon_arr[ai],sat_lat_arr[ai]),
-                     arrowprops=dict(arrowstyle='->',color='navy',lw=1.5),
-                     transform=ccrs.PlateCarree(), zorder=5)
+    if len(sat_lat_arr)>2:
+        for ai in np.linspace(0, len(sat_lat_arr)-2, 6, dtype=int):
+            ax8.annotate('', xy=(sat_lon_arr[ai+1],sat_lat_arr[ai+1]),
+                        xytext=(sat_lon_arr[ai],sat_lat_arr[ai]),
+                        arrowprops=dict(arrowstyle='->',color='navy',lw=1.5),
+                        transform=ccrs.PlateCarree(), zorder=5)
 
-ax8.scatter(sat_lon_arr[0],  sat_lat_arr[0],  color='lime',  s=80, zorder=5, transform=ccrs.PlateCarree())
-ax8.scatter(sat_lon_arr[-1], sat_lat_arr[-1], color='black', s=80, zorder=5, transform=ccrs.PlateCarree())
-cx,cy = sat_lon_arr[300], sat_lat_arr[300]
-ax8.scatter(cx,cy, color='yellow', edgecolors='darkorange', linewidths=1.2,
-            s=100, marker='*', zorder=6, transform=ccrs.PlateCarree())
-ax8.annotate('Max El.',(cx,cy), textcoords='offset points', xytext=(-9,-9),
-             fontsize=9, color='darkorange', fontweight='bold', transform=ccrs.PlateCarree())
-ax8.scatter(32.8541, 39.9208, color='red', marker='^', s=100,
-            zorder=6, transform=ccrs.PlateCarree())
-ax8.annotate('Ground Station',(32.8541, 39.9208),
-             textcoords='offset points', xytext=(10,10),
-             fontsize=9, color='darkred', fontweight='bold', transform=ccrs.PlateCarree())
-ax8.set_title('8. Satellite Ground Track  (green=State A / gold=State B / red=State C)',
-              fontsize=11, fontweight='bold', pad=8)
-fig8.tight_layout()
+    ax8.scatter(sat_lon_arr[0],  sat_lat_arr[0],  color='lime',  s=80, zorder=5, transform=ccrs.PlateCarree())
+    ax8.scatter(sat_lon_arr[-1], sat_lat_arr[-1], color='black', s=80, zorder=5, transform=ccrs.PlateCarree())
+    cx,cy = sat_lon_arr[300], sat_lat_arr[300]
+    ax8.scatter(cx,cy, color='yellow', edgecolors='darkorange', linewidths=1.2,
+                s=100, marker='*', zorder=6, transform=ccrs.PlateCarree())
+    ax8.annotate('Max El.',(cx,cy), textcoords='offset points', xytext=(-9,-9),
+                fontsize=9, color='darkorange', fontweight='bold', transform=ccrs.PlateCarree())
+    ax8.scatter(32.8541, 39.9208, color='red', marker='^', s=100,
+                zorder=6, transform=ccrs.PlateCarree())
+    ax8.annotate('Ground Station',(32.8541, 39.9208),
+                textcoords='offset points', xytext=(10,10),
+                fontsize=9, color='darkred', fontweight='bold', transform=ccrs.PlateCarree())
+    ax8.set_title('8. Satellite Ground Track  (green=State A / gold=State B / red=State C)',
+                fontsize=11, fontweight='bold', pad=8)
+    fig8.tight_layout()
 
-plt.show()
+    plt.show()
 
 # ===========================================================================
 # SECTION 3 – OFDMA PARAMETERS
@@ -565,17 +568,18 @@ for s in range(num_ofdm_symbols):
     resource_map[s, ue2_l] = 3
     resource_map[s, nrs_l] = 1
 
-# Figure: Resource grid
-fig_rg, ax_rg = plt.subplots(figsize=(10, 4))
-fig_rg.canvas.manager.set_window_title('Fig – Resource Grid')
-ax_rg.imshow(resource_map.T, aspect='auto', origin='lower')
-ax_rg.set_yticks(np.arange(nb_iot_subcarriers))
-ax_rg.set_xlabel("OFDM Symbol Index")
-ax_rg.set_ylabel("NB-IoT Local Subcarrier Index")
-ax_rg.set_title("NB-IoT Downlink Resource Allocation Grid\n0=Empty, 1=Pilot, 2=UE1, 3=UE2")
-plt.colorbar(ax_rg.images[0], ax=ax_rg)
-plt.tight_layout()
-plt.show()
+if OFDMA_GRAPHICS_AVAILABLE:
+    # Figure: Resource grid
+    fig_rg, ax_rg = plt.subplots(figsize=(10, 4))
+    fig_rg.canvas.manager.set_window_title('Fig – Resource Grid')
+    ax_rg.imshow(resource_map.T, aspect='auto', origin='lower')
+    ax_rg.set_yticks(np.arange(nb_iot_subcarriers))
+    ax_rg.set_xlabel("OFDM Symbol Index")
+    ax_rg.set_ylabel("NB-IoT Local Subcarrier Index")
+    ax_rg.set_title("NB-IoT Downlink Resource Allocation Grid\n0=Empty, 1=Pilot, 2=UE1, 3=UE2")
+    plt.colorbar(ax_rg.images[0], ax=ax_rg)
+    plt.tight_layout()
+    plt.show()
 
 bits_per_symbol_ue1      = 2 * 4
 bits_per_symbol_ue2      = 2 * 4
@@ -586,17 +590,18 @@ bits_tx_ue2   = generate_bits(num_ofdm_symbols * bits_per_symbol_ue2)
 symbols_tx_ue1 = qpsk_modulate(bits_tx_ue1, A).reshape(num_ofdm_symbols, symbols_per_user_per_sym)
 symbols_tx_ue2 = qpsk_modulate(bits_tx_ue2, A).reshape(num_ofdm_symbols, symbols_per_user_per_sym)
 
-# Figure: TX Constellation
-fig_tx_c, ax_tc = plt.subplots(figsize=(6, 6))
-fig_tx_c.canvas.manager.set_window_title('Fig – TX Constellation')
-ax_tc.plot(np.real(symbols_tx_ue1.flatten()), np.imag(symbols_tx_ue1.flatten()),
-           'bo', alpha=0.5, label='UE1 TX')
-ax_tc.plot(np.real(symbols_tx_ue2.flatten()), np.imag(symbols_tx_ue2.flatten()),
-           'ro', alpha=0.5, label='UE2 TX')
-ax_tc.set_xlabel("Inphase"); ax_tc.set_ylabel("Quadrature")
-ax_tc.set_title("TX QPSK Constellations")
-ax_tc.grid(True); ax_tc.axis("equal"); ax_tc.legend()
-plt.tight_layout(); plt.show()
+if OFDMA_GRAPHICS_AVAILABLE:
+    # Figure: TX Constellation
+    fig_tx_c, ax_tc = plt.subplots(figsize=(6, 6))
+    fig_tx_c.canvas.manager.set_window_title('Fig – TX Constellation')
+    ax_tc.plot(np.real(symbols_tx_ue1.flatten()), np.imag(symbols_tx_ue1.flatten()),
+            'bo', alpha=0.5, label='UE1 TX')
+    ax_tc.plot(np.real(symbols_tx_ue2.flatten()), np.imag(symbols_tx_ue2.flatten()),
+            'ro', alpha=0.5, label='UE2 TX')
+    ax_tc.set_xlabel("Inphase"); ax_tc.set_ylabel("Quadrature")
+    ax_tc.set_title("TX QPSK Constellations")
+    ax_tc.grid(True); ax_tc.axis("equal"); ax_tc.legend()
+    plt.tight_layout(); plt.show()
 
 tx_blocks          = []
 full_grid_shifted  = np.zeros((num_ofdm_symbols, sub), dtype=complex)
@@ -624,23 +629,26 @@ for s in range(num_ofdm_symbols):
 
 tx_signal = np.concatenate(tx_blocks)
 
-# Figure: 64-bin carrier map
-fig_cm, ax_cm = plt.subplots(figsize=(10, 4))
-fig_cm.canvas.manager.set_window_title('Fig – 64-Bin Carrier Map')
-ax_cm.stem(np.arange(sub), np.abs(full_grid_shifted[0]), basefmt=" ")
-ax_cm.set_xlabel("Shifted Frequency Bin"); ax_cm.set_ylabel("Magnitude")
-ax_cm.set_title("Full 64-Bin Carrier Map for One OFDM Symbol")
-ax_cm.grid(True); plt.tight_layout(); plt.show()
+if OFDMA_GRAPHICS_AVAILABLE:
+    # Figure: 64-bin carrier map
+    fig_cm, ax_cm = plt.subplots(figsize=(10, 4))
+    fig_cm.canvas.manager.set_window_title('Fig – 64-Bin Carrier Map')
+    ax_cm.stem(np.arange(sub), np.abs(full_grid_shifted[0]), basefmt=" ")
+    ax_cm.set_xlabel("Shifted Frequency Bin"); ax_cm.set_ylabel("Magnitude")
+    ax_cm.set_title("Full 64-Bin Carrier Map for One OFDM Symbol")
+    ax_cm.grid(True); plt.tight_layout(); plt.show()
 
 # Figure: TX Spectrum
 win_tx   = np.hanning(len(tx_signal))
 spec_tx  = np.fft.fftshift(np.fft.fft(tx_signal * win_tx, 4096))
-fig_sp, ax_sp = plt.subplots(figsize=(10, 4))
-fig_sp.canvas.manager.set_window_title('Fig – TX Spectrum')
-ax_sp.plot(20 * np.log10(np.abs(spec_tx) / np.max(np.abs(spec_tx)) + 1e-12))
-ax_sp.set_xlabel("Frequency"); ax_sp.set_ylabel("Magnitude (dB)")
-ax_sp.set_title("OFDMA Spectrum with Guard Bands and NB-IoT Narrowband")
-ax_sp.grid(True); plt.tight_layout(); plt.show()
+
+if OFDMA_GRAPHICS_AVAILABLE:
+    fig_sp, ax_sp = plt.subplots(figsize=(10, 4))
+    fig_sp.canvas.manager.set_window_title('Fig – TX Spectrum')
+    ax_sp.plot(20 * np.log10(np.abs(spec_tx) / np.max(np.abs(spec_tx)) + 1e-12))
+    ax_sp.set_xlabel("Frequency"); ax_sp.set_ylabel("Magnitude (dB)")
+    ax_sp.set_title("OFDMA Spectrum with Guard Bands and NB-IoT Narrowband")
+    ax_sp.grid(True); plt.tight_layout(); plt.show()
 
 print(f"  TX signal: {len(tx_signal)} ornek")
 
@@ -805,57 +813,58 @@ print(f"  Calculated SNR range from satellite pass: {np.min(calculated_snr_arr):
 print(f"  Overall UE1 BER = {ber_ue1_total:.8f}")
 print(f"  Overall UE2 BER = {ber_ue2_total:.8f}")
 
-fig_cb, ax_cb = plt.subplots(figsize=(6, 6))
-fig_cb.canvas.manager.set_window_title('Fig – Constellation Before EQ')
-ax_cb.plot(np.real(raw_const_ue1), np.imag(raw_const_ue1),
-           'bo', alpha=0.35, label='UE1 Before EQ')
-ax_cb.plot(np.real(raw_const_ue2), np.imag(raw_const_ue2),
-           'ro', alpha=0.35, label='UE2 Before EQ')
-ax_cb.set_xlabel("Inphase"); ax_cb.set_ylabel("Quadrature")
-ax_cb.set_title("Received Constellation Before Equalization")
-ax_cb.grid(True); ax_cb.axis("equal"); ax_cb.legend()
-plt.tight_layout(); plt.show()
+if OFDMA_GRAPHICS_AVAILABLE:
+    fig_cb, ax_cb = plt.subplots(figsize=(6, 6))
+    fig_cb.canvas.manager.set_window_title('Fig – Constellation Before EQ')
+    ax_cb.plot(np.real(raw_const_ue1), np.imag(raw_const_ue1),
+            'bo', alpha=0.35, label='UE1 Before EQ')
+    ax_cb.plot(np.real(raw_const_ue2), np.imag(raw_const_ue2),
+            'ro', alpha=0.35, label='UE2 Before EQ')
+    ax_cb.set_xlabel("Inphase"); ax_cb.set_ylabel("Quadrature")
+    ax_cb.set_title("Received Constellation Before Equalization")
+    ax_cb.grid(True); ax_cb.axis("equal"); ax_cb.legend()
+    plt.tight_layout(); plt.show()
 
-fig14, ax = plt.subplots(figsize=(6, 6))
-ax.set_xlim(-5, 5)
-ax.set_ylim(-5, 5)
-fig14.canvas.manager.set_window_title('Fig 14 – Constellation After Equalisation')
-ax.plot(np.array(eq_const_ue1).real, np.array(eq_const_ue1).imag,
-        'bo', alpha=0.25, markersize=3, label='UE1 after EQ')
-ax.plot(np.array(eq_const_ue2).real, np.array(eq_const_ue2).imag,
-        'ro', alpha=0.25, markersize=3, label='UE2 after EQ')
-ax.set_xlabel('In-phase'); ax.set_ylabel('Quadrature')
-ax.set_title('14. Received Constellation After Equalisation',
-            fontsize=11, fontweight='bold', pad=8)
-ax.grid(True); ax.axis('equal'); ax.legend(fontsize=9)
-fig14.tight_layout()
-plt.show()
+    fig14, ax = plt.subplots(figsize=(6, 6))
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-5, 5)
+    fig14.canvas.manager.set_window_title('Fig 14 – Constellation After Equalisation')
+    ax.plot(np.array(eq_const_ue1).real, np.array(eq_const_ue1).imag,
+            'bo', alpha=0.25, markersize=3, label='UE1 after EQ')
+    ax.plot(np.array(eq_const_ue2).real, np.array(eq_const_ue2).imag,
+            'ro', alpha=0.25, markersize=3, label='UE2 after EQ')
+    ax.set_xlabel('In-phase'); ax.set_ylabel('Quadrature')
+    ax.set_title('14. Received Constellation After Equalisation',
+                fontsize=11, fontweight='bold', pad=8)
+    ax.grid(True); ax.axis('equal'); ax.legend(fontsize=9)
+    fig14.tight_layout()
+    plt.show()
 
-fig_spec, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+    fig_spec, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 
-# Spektrum Before
-ax1.plot(10 * np.log10(np.abs(spectrum_rx_before)**2), color='red')
-ax1.set_title("RX Spectrum: BEFORE Doppler Compensation")
-ax1.grid(True)
+    # Spektrum Before
+    ax1.plot(10 * np.log10(np.abs(spectrum_rx_before)**2), color='red')
+    ax1.set_title("RX Spectrum: BEFORE Doppler Compensation")
+    ax1.grid(True)
 
-# Spektrum After
-ax2.plot(10 * np.log10(np.abs(spectrum_rx_after)**2), color='green')
-ax2.set_title("RX Spectrum: AFTER Doppler Compensation")
-ax2.grid(True)
+    # Spektrum After
+    ax2.plot(10 * np.log10(np.abs(spectrum_rx_after)**2), color='green')
+    ax2.set_title("RX Spectrum: AFTER Doppler Compensation")
+    ax2.grid(True)
 
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()
 
-fig_snr_time, ax_snr_time = plt.subplots(figsize=(10, 4))
-fig_snr_time.canvas.manager.set_window_title('Fig – Calculated SNR During Pass')
-ax_snr_time.plot(np.arange(num_ofdm_symbols), calculated_snr_arr, linewidth=1.8, label='Calculated SNR')
-ax_snr_time.set_xlabel("OFDM Symbol Index")
-ax_snr_time.set_ylabel("SNR (dB)")
-ax_snr_time.set_title("Calculated SNR During Satellite Pass")
-ax_snr_time.grid(True, linestyle='--', alpha=0.6)
-ax_snr_time.legend()
-plt.tight_layout()
-plt.show()
+    fig_snr_time, ax_snr_time = plt.subplots(figsize=(10, 4))
+    fig_snr_time.canvas.manager.set_window_title('Fig – Calculated SNR During Pass')
+    ax_snr_time.plot(np.arange(num_ofdm_symbols), calculated_snr_arr, linewidth=1.8, label='Calculated SNR')
+    ax_snr_time.set_xlabel("OFDM Symbol Index")
+    ax_snr_time.set_ylabel("SNR (dB)")
+    ax_snr_time.set_title("Calculated SNR During Satellite Pass")
+    ax_snr_time.grid(True, linestyle='--', alpha=0.6)
+    ax_snr_time.legend()
+    plt.tight_layout()
+    plt.show()
 
 # ===========================================================================
 # SECTION 6 – TERMINAL BER LIST
@@ -880,19 +889,21 @@ print(f"  Maximum calculated SNR={np.max(calculated_snr_arr):.2f} dB")
 # ===========================================================================
 # SECTION 7 – BER CURVE  (Calculated satellite-pass SNR vs UE1 vs UE2)
 # ===========================================================================
-fig_ber, ax_ber = plt.subplots(figsize=(8, 5))
-fig_ber.canvas.manager.set_window_title('Fig – BER Curve')
-ax_ber.semilogy(snr_bin_centers, ber_bin_ue1 + 1e-12, 'bo-',
-                label='UE1 Simulated BER', linewidth=1.5, markersize=6)
-ax_ber.semilogy(snr_bin_centers, ber_bin_ue2 + 1e-12, 'ro-',
-                label='UE2 Simulated BER', linewidth=1.5, markersize=6)
-ax_ber.set_xlabel("Calculated SNR from Satellite Pass (dB)")
-ax_ber.set_ylabel("BER")
-ax_ber.set_title("NB-IoT-Like Downlink OFDMA BER vs Calculated SNR\n"
-                 "(ITU-R atmospheric channel + orbital Doppler)")
-ax_ber.grid(True, which='both', linestyle='--', alpha=0.6)
-ax_ber.legend()
-plt.tight_layout()
-plt.show()
 
-print("\n  Simulation done")
+if OFDMA_GRAPHICS_AVAILABLE:
+    fig_ber, ax_ber = plt.subplots(figsize=(8, 5))
+    fig_ber.canvas.manager.set_window_title('Fig – BER Curve')
+    ax_ber.semilogy(snr_bin_centers, ber_bin_ue1 + 1e-12, 'bo-',
+                    label='UE1 Simulated BER', linewidth=1.5, markersize=6)
+    ax_ber.semilogy(snr_bin_centers, ber_bin_ue2 + 1e-12, 'ro-',
+                    label='UE2 Simulated BER', linewidth=1.5, markersize=6)
+    ax_ber.set_xlabel("Calculated SNR from Satellite Pass (dB)")
+    ax_ber.set_ylabel("BER")
+    ax_ber.set_title("NB-IoT-Like Downlink OFDMA BER vs Calculated SNR\n"
+                    "(ITU-R atmospheric channel + orbital Doppler)")
+    ax_ber.grid(True, which='both', linestyle='--', alpha=0.6)
+    ax_ber.legend()
+    plt.tight_layout()
+    plt.show()
+
+    print("\n  Simulation done")
