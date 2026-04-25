@@ -1,3 +1,4 @@
+# @title
 """
 NTN NB-IoT OFDMA Simulation 
 """
@@ -11,6 +12,7 @@ from scipy.special import erfc
 from skyfield.api import load, EarthSatellite, wgs84
 from datetime import timedelta
 from matplotlib.gridspec import GridSpec
+from scipy.interpolate import interp1d
 
 np.random.seed(42)
 
@@ -116,7 +118,6 @@ def compute_channel_series():
     BW_HZ           = 180e3
     noise_power_dbm = 10 * np.log10(K_BOLT * T_SYS * BW_HZ / 1e-3)
 
-    # En iyi gecisi bul (kod-3 mantigi)
     t_future     = ts.from_datetime(t_now.utc_datetime() + timedelta(days=7))
     pass_times, pass_events = satellite.find_events(
         ground_station, t_now, t_future, altitude_degrees=5.0)
@@ -315,8 +316,6 @@ def fmt(ax, title, xlabel='Time (Minutes)', ylabel=''):
 # ===========================================================================
 
 if CHANNEL_GRAPHICS_AVAILABLE:
-# --- Figure 1: Path Loss ---
-
     fig1, ax = plt.subplots(figsize=(10, 5))
     fig1.canvas.manager.set_window_title('Fig 1 – Total Path Loss')
     add_markov_bands(ax)
@@ -325,13 +324,11 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     add_culm(ax)
     fmt(ax, '1. Total Path Loss Over Time', ylabel='Loss (dB)')
     fig1.tight_layout()
-
     ax.grid(True, linestyle='--', alpha=0.7)
     ax.legend()
     plt.tight_layout()
     plt.show()
 
-    # Figure: ITU-R atmospheric contributions
     fig_atm, ax_atm = plt.subplots(figsize=(10, 5))
     fig_atm.canvas.manager.set_window_title('Fig – ITU-R Atmospheric Loss')
     add_markov_bands(ax_atm)
@@ -346,7 +343,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     fig_atm.tight_layout()
     plt.show()
 
-    #FSPL vs Slant Range
     fig2, ax = plt.subplots(figsize=(10, 5))
     fig2.canvas.manager.set_window_title('Fig 2 – FSPL & Slant Range')
     add_markov_bands(ax)
@@ -363,8 +359,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     fig2.tight_layout()
     plt.show()
 
-    # --- Figure 2: Elevation & Markov States---
-
     fig3, ax = plt.subplots(figsize=(10, 5))
     fig3.canvas.manager.set_window_title('Fig 3 – Elevation & Markov States')
     add_markov_bands(ax)
@@ -376,8 +370,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     ax.legend(fontsize=9)
     fig3.tight_layout()
     plt.show()
-
-    # --- Figure 3: Doppler ---
 
     fig4, ax = plt.subplots(figsize=(10, 5))
     fig4.canvas.manager.set_window_title('Fig 4 – Doppler Shift (S-Curve)')
@@ -400,8 +392,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     fig4.tight_layout()
     plt.show()
 
-    # --- Figure 4: Rician K ---
-
     fig5, ax = plt.subplots(figsize=(10, 5))
     fig5.canvas.manager.set_window_title('Fig 5 – Rician K-Factor')
     add_markov_bands(ax)
@@ -411,8 +401,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     ax.legend(fontsize=9)
     fig5.tight_layout()
     plt.show()
-
-    # --- Figure 5: Link Budget ---
 
     rx_sens = channel_results['rx_sensitivity_dbm']
     fig6, ax = plt.subplots(figsize=(10, 5))
@@ -433,24 +421,18 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     fig6.tight_layout()
     plt.show()
 
-    # --- Figure 6: Markov state bar ---
-
     fig7, ax = plt.subplots(figsize=(9, 6))
     fig7.canvas.manager.set_window_title('Fig 7 – Markov State Parameters')
-
     states_lbl = ['A  (LOS)', 'B  (Moderate)', 'C  (Shadow)']
     el_bounds  = ['el ≥ 50°', '25°≤el<50°', 'el < 25°']
     durations  = [state_counts.get(k, 0) for k in ['A','B','C']]
     pct_       = [100*d/600 for d in durations]
-
     def state_mean_(arr, sk):
         idx_ = np.where(state_arr == sk)[0]
         return np.mean(arr[idx_]) if len(idx_) else float('nan')
-
     ml_ = [state_mean_(loss_arr, k) for k in ['A','B','C']]
     ms_ = [state_mean_(snr_arr,  k) for k in ['A','B','C']]
     mk_ = [state_mean_(k_arr,    k) for k in ['A','B','C']]
-
     bc_ = ['#2e7d32','#f9a825','#c62828']
     bars = ax.bar(states_lbl, durations, color=bc_, alpha=0.88, edgecolor='black', linewidth=0.9)
     for i,(bar,d,p,ml,ms,mk,bnd) in enumerate(zip(bars,durations,pct_,ml_,ms_,mk_,el_bounds)):
@@ -469,8 +451,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     fig7.tight_layout()
     plt.show()
 
-    # --- Figure 7: Ground track ---
-
     fig8 = plt.figure(figsize=(16, 7))
     fig8.canvas.manager.set_window_title('Fig 8 – Ground Track (Global)')
     ax8  = fig8.add_subplot(1,1,1, projection=ccrs.PlateCarree())
@@ -481,20 +461,17 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     ax8.add_feature(cfeature.BORDERS,   linewidth=0.5, alpha=0.6, zorder=1)
     gl8 = ax8.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
     gl8.top_labels=False; gl8.right_labels=False
-
     SC = {'A':'limegreen','B':'gold','C':'tomato'}
     for i in range(len(sat_lat_arr)-1):
         ax8.plot(sat_lon_arr[i:i+2], sat_lat_arr[i:i+2],
                 color=SC[state_arr[i]], linewidth=2.8,
                 transform=ccrs.PlateCarree(), zorder=3)
-
     if len(sat_lat_arr)>2:
         for ai in np.linspace(0, len(sat_lat_arr)-2, 6, dtype=int):
             ax8.annotate('', xy=(sat_lon_arr[ai+1],sat_lat_arr[ai+1]),
                         xytext=(sat_lon_arr[ai],sat_lat_arr[ai]),
                         arrowprops=dict(arrowstyle='->',color='navy',lw=1.5),
                         transform=ccrs.PlateCarree(), zorder=5)
-
     ax8.scatter(sat_lon_arr[0],  sat_lat_arr[0],  color='lime',  s=80, zorder=5, transform=ccrs.PlateCarree())
     ax8.scatter(sat_lon_arr[-1], sat_lat_arr[-1], color='black', s=80, zorder=5, transform=ccrs.PlateCarree())
     cx,cy = sat_lon_arr[300], sat_lat_arr[300]
@@ -510,7 +487,6 @@ if CHANNEL_GRAPHICS_AVAILABLE:
     ax8.set_title('8. Satellite Ground Track  (green=State A / gold=State B / red=State C)',
                 fontsize=11, fontweight='bold', pad=8)
     fig8.tight_layout()
-
     plt.show()
 
 # ===========================================================================
@@ -524,11 +500,11 @@ sub                    = 64
 cp_length              = 16
 system_active_subcarriers = 32
 nb_iot_subcarriers     = 12
-num_ofdm_symbols       = 1000
+num_ofdm_symbols       = 10000
 snr_bin_count          = 15
 
 E_bit      = 1
-A          = np.sqrt(E_bit) / np.sqrt(2)
+A          = np.sqrt(E_bit) / np.sqrt(2)   # = 1/sqrt(2) = 0.7071
 pilot_value = A + 1j * A
 
 center     = sub // 2
@@ -541,15 +517,28 @@ fs         = sub * 15000       # 960 kHz sampling frequency
 block_len  = sub + cp_length   # 80 samples/block
 
 def get_nrs_positions_in_symbol(symbol_in_subframe, n_cell_id):
-    v_shift = n_cell_id % 3
-    return np.array([v_shift, v_shift + 3, v_shift + 7, v_shift + 10])
-
+    #v_shift = n_cell_id % 3
+    #return np.array([v_shift, v_shift + 3, v_shift + 7, v_shift + 10])
+    return np.array([0, 3, 8, 11])
+"""
 def get_data_positions_in_symbol(symbol_in_subframe, n_cell_id):
     nrs_local  = get_nrs_positions_in_symbol(symbol_in_subframe, n_cell_id)
     data_local = np.setdiff1d(np.arange(nb_iot_subcarriers), nrs_local)
-    half_data  = len(data_local) // 2
-    return nrs_local, data_local[:half_data], data_local[half_data:]
-
+    #half_data  = len(data_local) // 2
+    #return nrs_local, data_local[:half_data], data_local[half_data:]
+    ue1_local = data_local[0::2]  
+    ue2_local = data_local[1::2]   
+    return nrs_local, ue1_local, ue2_local
+"""
+def get_data_positions_in_symbol(symbol_in_subframe, n_cell_id):
+    nrs_local  = get_nrs_positions_in_symbol(symbol_in_subframe, n_cell_id)
+    data_local = np.setdiff1d(np.arange(nb_iot_subcarriers), nrs_local)
+    
+    # Ardışık değil, interleaved → her iki UE de tüm banda yayılır
+    ue1_local = data_local[0::2]   # çift indeksler
+    ue2_local = data_local[1::2]   # tek indeksler
+    
+    return nrs_local, ue1_local, ue2_local
 print(f"  FFT={sub}  CP={cp_length}  NB={nb_iot_subcarriers}  fs={fs/1e3:.0f} kHz")
 print(f"  NB-IoT shifted bins: {nb_iot_shifted}")
 print("  Pilot optimization: 4 distributed pilots per OFDM symbol, 4 QPSK data symbols per UE")
@@ -569,7 +558,6 @@ for s in range(num_ofdm_symbols):
     resource_map[s, nrs_l] = 1
 
 if OFDMA_GRAPHICS_AVAILABLE:
-    # Figure: Resource grid
     fig_rg, ax_rg = plt.subplots(figsize=(10, 4))
     fig_rg.canvas.manager.set_window_title('Fig – Resource Grid')
     ax_rg.imshow(resource_map.T, aspect='auto', origin='lower')
@@ -591,7 +579,6 @@ symbols_tx_ue1 = qpsk_modulate(bits_tx_ue1, A).reshape(num_ofdm_symbols, symbols
 symbols_tx_ue2 = qpsk_modulate(bits_tx_ue2, A).reshape(num_ofdm_symbols, symbols_per_user_per_sym)
 
 if OFDMA_GRAPHICS_AVAILABLE:
-    # Figure: TX Constellation
     fig_tx_c, ax_tc = plt.subplots(figsize=(6, 6))
     fig_tx_c.canvas.manager.set_window_title('Fig – TX Constellation')
     ax_tc.plot(np.real(symbols_tx_ue1.flatten()), np.imag(symbols_tx_ue1.flatten()),
@@ -630,7 +617,6 @@ for s in range(num_ofdm_symbols):
 tx_signal = np.concatenate(tx_blocks)
 
 if OFDMA_GRAPHICS_AVAILABLE:
-    # Figure: 64-bin carrier map
     fig_cm, ax_cm = plt.subplots(figsize=(10, 4))
     fig_cm.canvas.manager.set_window_title('Fig – 64-Bin Carrier Map')
     ax_cm.stem(np.arange(sub), np.abs(full_grid_shifted[0]), basefmt=" ")
@@ -638,7 +624,6 @@ if OFDMA_GRAPHICS_AVAILABLE:
     ax_cm.set_title("Full 64-Bin Carrier Map for One OFDM Symbol")
     ax_cm.grid(True); plt.tight_layout(); plt.show()
 
-# Figure: TX Spectrum
 win_tx   = np.hanning(len(tx_signal))
 spec_tx  = np.fft.fftshift(np.fft.fft(tx_signal * win_tx, 4096))
 
@@ -653,38 +638,42 @@ if OFDMA_GRAPHICS_AVAILABLE:
 print(f"  TX signal: {len(tx_signal)} ornek")
 
 # ===========================================================================
-# SECTION 5 – CHANNEL EFFECT ON SIGNAL
+# SECTION 5 – CHANNEL EFFECT ON SIGNAL  (slot-based receiver)
 # ===========================================================================
 print("\n" + "="*60)
-print("  SECTION 5 – Channel + Receiver")
+print("  SECTION 5 – Channel + Receiver  (slot-based freq-domain EQ)")
 print("="*60)
 
-channel_symbol = resample_channel_to_symbols(channel_results, num_ofdm_symbols)
+channel_symbol     = resample_channel_to_symbols(channel_results, num_ofdm_symbols)
 calculated_snr_arr = channel_symbol['snr_arr']
-calculated_el_arr = channel_symbol['el_arr']
+calculated_el_arr  = channel_symbol['el_arr']
 
 rx_blocks_after_channel = []
 h_channel_series        = []
 
+def interp_channel(nrs_local, H_pilots, n_sub=12):
+    f = interp1d(
+        nrs_local.astype(float), H_pilots,
+        kind='linear',
+        bounds_error=False,
+        fill_value=(H_pilots[0], H_pilots[-1])  
+    )
+    return f(np.arange(n_sub))
+
 for s in range(num_ofdm_symbols):
-    tx_block   = tx_blocks[s]
-    doppler_hz = channel_symbol['dop_arr'][s]
+    tx_block    = tx_blocks[s]
+    doppler_hz  = channel_symbol['dop_arr'][s]
     k_factor_db = channel_symbol['k_arr'][s]
-    snr_db = calculated_snr_arr[s]
+    snr_db      = calculated_snr_arr[s]
+    t_block     = np.arange(len(tx_block)) / fs
 
-    t_block = np.arange(len(tx_block)) / fs
-
-    k_lin = 10 ** (k_factor_db / 10)
-    los   = np.sqrt(k_lin / (k_lin + 1))
-    nlos  = (np.random.normal(0, 1) + 1j * np.random.normal(0, 1)) / np.sqrt(2 * (k_lin + 1))
+    k_lin     = 10 ** (k_factor_db / 10)
+    los       = np.sqrt(k_lin / (k_lin + 1))
+    nlos      = (np.random.normal(0, 1) + 1j * np.random.normal(0, 1)) / np.sqrt(2 * (k_lin + 1))
     h_channel = los + nlos
-    h_channel = h_channel / np.abs(h_channel)
-    #power_norm = np.sqrt(np.abs(h_channel)**2 + 1e-12)
-    #h_channel = h_channel / power_norm
+    h_channel = h_channel / np.abs(h_channel)  
 
-    #path_loss_amp = 10 ** (-channel_symbol['loss_arr'][s] / 20)
-    #ch_block = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel * path_loss_amp
-    ch_block = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel
+    ch_block         = tx_block * np.exp(1j * 2 * np.pi * doppler_hz * t_block) * h_channel
     rx_block_channel = awgn(ch_block, snr_db, cp_length, sub, nb_iot_subcarriers)
 
     rx_blocks_after_channel.append(rx_block_channel)
@@ -695,74 +684,76 @@ rx_signal = np.concatenate(rx_blocks_after_channel)
 window_rx_before   = np.hanning(len(rx_signal))
 spectrum_rx_before = np.fft.fftshift(np.fft.fft(rx_signal * window_rx_before, 4096))
 
+rx_blocks_comp = []
+phase_acc      = 0.0                         
+idx            = 0
+
+for s in range(num_ofdm_symbols):
+    rx_block       = rx_signal[idx: idx + block_len]
+    doppler_hz     = channel_symbol['dop_arr'][s]
+    t_rx           = np.arange(len(rx_block)) / fs
+    phase_vec      = phase_acc + 2 * np.pi * doppler_hz * t_rx
+    rx_block_comp  = rx_block * np.exp(-1j * phase_vec)
+    phase_acc      = phase_vec[-1] + 2 * np.pi * doppler_hz / fs  
+    rx_blocks_comp.append(rx_block_comp)
+    idx           += block_len
+
+rx_signal_comp    = np.concatenate(rx_blocks_comp)
+window_rx_after   = np.hanning(len(rx_signal_comp))
+spectrum_rx_after = np.fft.fftshift(np.fft.fft(rx_signal_comp * window_rx_after, 4096))
+
 rx_symbols_ue1 = np.zeros((num_ofdm_symbols, symbols_per_user_per_sym), dtype=complex)
 rx_symbols_ue2 = np.zeros((num_ofdm_symbols, symbols_per_user_per_sym), dtype=complex)
 
-raw_const_ue1  = []
-raw_const_ue2  = []
-eq_const_ue1   = []
-eq_const_ue2   = []
-rx_blocks_comp = []
+raw_const_ue1 = []
+raw_const_ue2 = []
+eq_const_ue1  = []
+eq_const_ue2  = []
 
-h_est_nb_last  = None
-h_pilots_last  = None
-nrs_local_last = None
-
-idx = 0
 for s in range(num_ofdm_symbols):
-    rx_block = rx_signal[idx: idx + block_len]
 
-    doppler_comp_hz = channel_symbol['dop_arr'][s]
-    t_rx = np.arange(len(rx_block)) / fs
-    rx_block_comp = rx_block * np.exp(-1j * 2 * np.pi * doppler_comp_hz * t_rx)
-    rx_blocks_comp.append(rx_block_comp)
+    blk       = rx_blocks_comp[s]
+    ofdm_data = blk[cp_length: cp_length + sub]
+    X_hat     = np.fft.fftshift(np.fft.fft(ofdm_data, n=sub)) / np.sqrt(sub)
 
-    rx_no_cp  = remove_cp(rx_block_comp, cp_length, sub)
-    rx_fft    = np.fft.fft(rx_no_cp) / np.sqrt(sub)
-    rx_shifted = np.fft.fftshift(rx_fft)
+    D_hat = np.array([X_hat[nb_iot_shifted[k]] for k in range(nb_iot_subcarriers)])
 
     nrs_local, ue1_local, ue2_local = get_data_positions_in_symbol(s % 14, n_cell_id=0)
-    nrs_sh = nb_iot_shifted[nrs_local]
-    ue1_sh = nb_iot_shifted[ue1_local]
-    ue2_sh = nb_iot_shifted[ue2_local]
 
-    rx_pilots = rx_shifted[nrs_sh]
-    h_pilots  = rx_pilots / pilot_value
+    H_pilots = D_hat[nrs_local] / pilot_value   
 
-    h_est_scalar = np.mean(h_pilots)
-    h_est_nb = np.ones(nb_iot_subcarriers, dtype=complex) * h_est_scalar
+    H_est_full = np.interp(
+        np.arange(nb_iot_subcarriers),         
+        nrs_local.astype(float),                
+        H_pilots                                
+    )
+ 
+    H_est_full = (
+        interp_channel(nrs_local, H_pilots.real)
+        + 1j *
+        interp_channel(nrs_local, H_pilots.imag)
+    )
 
-    h_est_ue1 = h_est_nb[ue1_local]
-    h_est_ue2 = h_est_nb[ue2_local]
+    H_est_ue1 = H_est_full[ue1_local]   
+    H_est_ue2 = H_est_full[ue2_local]   
 
-    raw_ue1 = rx_shifted[ue1_sh]
-    raw_ue2 = rx_shifted[ue2_sh]
+    raw_ue1 = D_hat[ue1_local]
+    raw_ue2 = D_hat[ue2_local]
 
-    snr_linear_symbol = 10 ** (calculated_snr_arr[s] / 10)
-    mmse_eps = 1.0 / (snr_linear_symbol + 1e-12)
+    raw_const_ue1.extend(raw_ue1)
+    raw_const_ue2.extend(raw_ue2)
 
-    eq_ue1 = raw_ue1 * np.conj(h_est_ue1) / (np.abs(h_est_ue1)**2 + mmse_eps + 1e-12)
-    eq_ue2 = raw_ue2 * np.conj(h_est_ue2) / (np.abs(h_est_ue2)**2 + mmse_eps + 1e-12)
-    eq_ue1 = eq_ue1 * (A / np.mean(np.abs(eq_ue1)))
-    eq_ue2 = eq_ue2 * (A / np.mean(np.abs(eq_ue2)))
+    snr_lin  = 10 ** (calculated_snr_arr[s] / 10)
+    mmse_eps = 1.0 / (snr_lin + 1e-12)
+
+    eq_ue1 = raw_ue1 * np.conj(H_est_ue1) / (np.abs(H_est_ue1)**2 + mmse_eps + 1e-12)
+    eq_ue2 = raw_ue2 * np.conj(H_est_ue2) / (np.abs(H_est_ue2)**2 + mmse_eps + 1e-12)
 
     rx_symbols_ue1[s] = eq_ue1
     rx_symbols_ue2[s] = eq_ue2
 
-    raw_const_ue1.extend(raw_ue1)
-    raw_const_ue2.extend(raw_ue2)
     eq_const_ue1.extend(eq_ue1)
     eq_const_ue2.extend(eq_ue2)
-
-    h_est_nb_last  = h_est_nb
-    h_pilots_last  = h_pilots
-    nrs_local_last = nrs_local
-
-    idx += block_len
-
-rx_signal_comp   = np.concatenate(rx_blocks_comp)
-window_rx_after  = np.hanning(len(rx_signal_comp))
-spectrum_rx_after = np.fft.fftshift(np.fft.fft(rx_signal_comp * window_rx_after, 4096))
 
 bits_rx_ue1 = nearest_neighbor_qpsk(rx_symbols_ue1.flatten(), A)[:len(bits_tx_ue1)]
 bits_rx_ue2 = nearest_neighbor_qpsk(rx_symbols_ue2.flatten(), A)[:len(bits_tx_ue2)]
@@ -787,10 +778,10 @@ snr_min = np.floor(np.min(calculated_snr_arr))
 snr_max = np.ceil(np.max(calculated_snr_arr))
 snr_bins = np.linspace(snr_min, snr_max, snr_bin_count + 1)
 snr_bin_centers = []
-ber_bin_ue1 = []
-ber_bin_ue2 = []
-el_bin_mean = []
-sym_bin_count = []
+ber_bin_ue1     = []
+ber_bin_ue2     = []
+el_bin_mean     = []
+sym_bin_count   = []
 
 for i in range(len(snr_bins) - 1):
     if i == len(snr_bins) - 2:
@@ -806,10 +797,17 @@ for i in range(len(snr_bins) - 1):
     sym_bin_count.append(np.sum(mask))
 
 snr_bin_centers = np.array(snr_bin_centers)
-ber_bin_ue1 = np.array(ber_bin_ue1)
-ber_bin_ue2 = np.array(ber_bin_ue2)
-el_bin_mean = np.array(el_bin_mean)
-sym_bin_count = np.array(sym_bin_count)
+ber_bin_ue1     = np.array(ber_bin_ue1)
+ber_bin_ue2     = np.array(ber_bin_ue2)
+el_bin_mean     = np.array(el_bin_mean)
+sym_bin_count   = np.array(sym_bin_count)
+MIN_SYMS = 200
+mask_valid      = sym_bin_count >= MIN_SYMS
+snr_bin_centers = snr_bin_centers[mask_valid]
+ber_bin_ue1     = ber_bin_ue1[mask_valid]
+ber_bin_ue2     = ber_bin_ue2[mask_valid]
+el_bin_mean     = el_bin_mean[mask_valid]
+sym_bin_count   = sym_bin_count[mask_valid]
 
 print(f"  Calculated SNR range from satellite pass: {np.min(calculated_snr_arr):.2f} dB to {np.max(calculated_snr_arr):.2f} dB")
 print(f"  Overall UE1 BER = {ber_ue1_total:.8f}")
@@ -828,32 +826,31 @@ if OFDMA_GRAPHICS_AVAILABLE:
     plt.tight_layout(); plt.show()
 
     fig14, ax = plt.subplots(figsize=(6, 6))
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(-5, 5)
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
     fig14.canvas.manager.set_window_title('Fig 14 – Constellation After Equalisation')
     ax.plot(np.array(eq_const_ue1).real, np.array(eq_const_ue1).imag,
             'bo', alpha=0.25, markersize=3, label='UE1 after EQ')
     ax.plot(np.array(eq_const_ue2).real, np.array(eq_const_ue2).imag,
             'ro', alpha=0.25, markersize=3, label='UE2 after EQ')
+    # Referans QPSK noktaları
+    for xr, yi in [(-A,-A),(-A,A),(A,-A),(A,A)]:
+        ax.plot(xr, yi, 'k+', markersize=14, markeredgewidth=2)
     ax.set_xlabel('In-phase'); ax.set_ylabel('Quadrature')
-    ax.set_title('14. Received Constellation After Equalisation',
-                fontsize=11, fontweight='bold', pad=8)
+    ax.set_title('14. Received Constellation After Equalisation\n'
+                 f'(QPSK ideal: ±{A:.4f})',
+                 fontsize=11, fontweight='bold', pad=8)
     ax.grid(True); ax.axis('equal'); ax.legend(fontsize=9)
     fig14.tight_layout()
     plt.show()
 
     fig_spec, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-
-    # Spektrum Before
     ax1.plot(10 * np.log10(np.abs(spectrum_rx_before)**2), color='red')
     ax1.set_title("RX Spectrum: BEFORE Doppler Compensation")
     ax1.grid(True)
-
-    # Spektrum After
     ax2.plot(10 * np.log10(np.abs(spectrum_rx_after)**2), color='green')
     ax2.set_title("RX Spectrum: AFTER Doppler Compensation")
     ax2.grid(True)
-
     plt.tight_layout()
     plt.show()
 
@@ -889,7 +886,7 @@ print(f"  Minimum calculated SNR={np.min(calculated_snr_arr):.2f} dB")
 print(f"  Maximum calculated SNR={np.max(calculated_snr_arr):.2f} dB")
 
 # ===========================================================================
-# SECTION 7 – BER CURVE  (Calculated satellite-pass SNR vs UE1 vs UE2)
+# SECTION 7 – BER CURVE
 # ===========================================================================
 
 if OFDMA_GRAPHICS_AVAILABLE:
